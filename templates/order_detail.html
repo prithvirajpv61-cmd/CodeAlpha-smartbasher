@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order Receipt - {{ order.order_reference }} - ShopEase{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="margin: 2rem 0 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <a href="{% url 'my_orders' %}" style="font-size: 0.875rem; color: var(--primary); font-weight: 600;">&larr; Back to My Orders</a>
+      <h1 style="font-size: 2rem; font-weight: 800; margin-top: 0.5rem;">Order #{{ order.order_reference }}</h1>
+      <p style="color: var(--text-muted); font-size: 0.875rem;">Placed on {{ order.created_at|date:"F d, Y at h:i A" }}</p>
+    </div>
+
+    <div>
+      <span class="order-status-pill status-{{ order.order_status|lower }}" style="font-size: 0.9375rem; padding: 0.5rem 1.25rem;">
+        Status: {{ order.order_status }}
+      </span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2.5rem; margin-bottom: 4rem;">
+    <!-- Items Breakdown -->
+    <div class="cart-items-card">
+      <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-light);">
+        Items Ordered
+      </h3>
+
+      <div class="order-items-grid">
+        {% for item in order.items.all %}
+          <div class="order-item-mini" style="padding-bottom: 1rem; border-bottom: 1px solid var(--border-light);">
+            <div class="order-item-left">
+              {% if item.product %}
+                <img 
+                  src="{{ item.product.get_display_image }}" 
+                  alt="{{ item.product_name }}" 
+                  class="order-item-thumb"
+                  onerror="this.src='{% static 'images/placeholder.svg' %}'"
+                >
+              {% else %}
+                <img 
+                  src="{% static 'images/placeholder.svg' %}" 
+                  alt="{{ item.product_name }}" 
+                  class="order-item-thumb"
+                >
+              {% endif %}
+              <div>
+                <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem;">
+                  {% if item.product %}
+                    <a href="{{ item.product.get_absolute_url }}">{{ item.product_name }}</a>
+                  {% else %}
+                    {{ item.product_name }}
+                  {% endif %}
+                </h4>
+                <div style="font-size: 0.8125rem; color: var(--text-muted);">
+                  Unit Price: {{ item.formatted_price }} &bull; Quantity: <strong>{{ item.quantity }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div style="font-weight: 800; font-size: 1.125rem; color: var(--primary);">
+              {{ item.formatted_subtotal }}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div style="margin-top: 1.5rem; text-align: right;">
+        <div style="font-size: 1.25rem; font-weight: 800;">
+          Total Paid: <span style="color: var(--primary);">{{ order.formatted_total }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order & Customer Details -->
+    <div>
+      <div class="order-summary-card">
+        <h3 class="summary-title">Delivery Details</h3>
+        <p style="font-size: 0.9375rem; line-height: 1.6; color: var(--text-main); margin-bottom: 1.5rem;">
+          <strong>{{ order.full_name }}</strong><br>
+          📞 {{ order.phone }}<br>
+          ✉️ {{ order.email }}<br>
+          📍 {{ order.address }}<br>
+          {{ order.city }}, {{ order.state }} - {{ order.postal_code }}
+        </p>
+
+        <h3 class="summary-title" style="margin-top: 1.5rem;">Payment Information</h3>
+        <div class="summary-line">
+          <span>Method:</span>
+          <strong>{{ order.get_payment_method_display }}</strong>
+        </div>
+        <div class="summary-line">
+          <span>Payment Status:</span>
+          <span style="font-weight: 700; color: {% if order.payment_status == 'Completed' %}var(--success){% else %}var(--warning){% endif %};">
+            {{ order.payment_status }}
+          </span>
+        </div>
+
+        {% if order.notes %}
+          <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 0.8125rem; color: var(--text-muted);">
+            <strong>Delivery Instructions:</strong><br>
+            {{ order.notes }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

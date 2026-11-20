@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order Confirmed - {{ order.order_reference }} - ShopEase{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="confirmation-card">
+    <div class="success-icon-wrapper">
+      ✓
+    </div>
+
+    <h1 class="confirmation-title">Thank You For Your Order!</h1>
+    <p style="color: var(--text-muted); font-size: 1.0625rem; margin-bottom: 1.5rem;">
+      Your order has been placed and registered in our database. We are preparing it for shipment!
+    </p>
+
+    <div>
+      <span style="font-size: 0.8125rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem;">Order Reference</span>
+      <span class="confirmation-ref-badge" id="orderReferenceBadge">{{ order.order_reference }}</span>
+    </div>
+
+    <!-- Quick Meta Grid -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; text-align: left; background: var(--bg-muted); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+      <div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Placed On</div>
+        <div style="font-weight: 700; color: var(--text-main);">{{ order.created_at|date:"d M Y, h:i A" }}</div>
+      </div>
+      <div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Payment</div>
+        <div style="font-weight: 700; color: var(--text-main);">
+          {{ order.get_payment_method_display }}
+        </div>
+      </div>
+      <div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Payment Status</div>
+        <div style="font-weight: 700; color: {% if order.payment_status == 'Completed' %}var(--success){% else %}var(--warning){% endif %};">
+          ● {{ order.payment_status }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Purchased Items Table -->
+    <h3 style="text-align: left; font-size: 1.125rem; font-weight: 700; margin-bottom: 0.75rem;">Items in this Order</h3>
+    <table class="order-details-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th style="text-align: right;">Unit Price</th>
+          <th style="text-align: center;">Qty</th>
+          <th style="text-align: right;">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order.items.all %}
+          <tr>
+            <td>
+              <div style="font-weight: 600; color: var(--text-main);">{{ item.product_name }}</div>
+            </td>
+            <td style="text-align: right; color: var(--text-muted);">{{ item.formatted_price }}</td>
+            <td style="text-align: center; font-weight: 600;">{{ item.quantity }}</td>
+            <td style="text-align: right; font-weight: 700; color: var(--text-main);">{{ item.formatted_subtotal }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3" style="text-align: right; font-weight: 800; font-size: 1.125rem; padding-top: 1rem;">Total Amount:</td>
+          <td style="text-align: right; font-weight: 800; font-size: 1.25rem; color: var(--primary); padding-top: 1rem;">{{ order.formatted_total }}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- Shipping Address Summary -->
+    <div style="text-align: left; background: var(--bg-muted); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+      <h4 style="font-size: 0.9375rem; font-weight: 700; margin-bottom: 0.5rem;">Delivery Destination:</h4>
+      <p style="font-size: 0.875rem; color: var(--text-main); line-height: 1.5;">
+        <strong>{{ order.full_name }}</strong> &bull; {{ order.phone }}<br>
+        {{ order.address }}<br>
+        {{ order.city }}, {{ order.state }} - {{ order.postal_code }}
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="{% url 'my_orders' %}" class="btn btn-primary btn-lg" id="viewMyOrdersBtn">
+        View My Orders
+      </a>
+      <a href="{% url 'home' %}" class="btn btn-secondary btn-lg" id="continueShoppingBtn">
+        Continue Shopping
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

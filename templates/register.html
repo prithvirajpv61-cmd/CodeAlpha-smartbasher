@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Account - ShopEase{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="auth-wrapper">
+    <div class="auth-header">
+      <div style="margin-bottom: 1rem;">
+        <img src="{% static 'images/logo.svg' %}" alt="ShopEase" style="height: 38px; margin: 0 auto;">
+      </div>
+      <h1 class="auth-title">Create Account</h1>
+      <p class="auth-subtitle">Join thousands enjoying effortless shopping with ShopEase</p>
+    </div>
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-error">
+        {% for error in form.non_field_errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'register' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}" id="registerForm">
+      {% csrf_token %}
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label" for="id_first_name">First Name</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}
+            <div class="form-error">{{ form.first_name.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_last_name">Last Name</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}
+            <div class="form-error">{{ form.last_name.errors.0 }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_username">Username *</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+          <div class="form-error">{{ form.username.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_email">Email Address *</label>
+        {{ form.email }}
+        {% if form.email.errors %}
+          <div class="form-error">{{ form.email.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_password">Password (min 6 characters) *</label>
+        {{ form.password }}
+        {% if form.password.errors %}
+          <div class="form-error">{{ form.password.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_password_confirm">Confirm Password *</label>
+        {{ form.password_confirm }}
+        {% if form.password_confirm.errors %}
+          <div class="form-error">{{ form.password_confirm.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div style="margin-top: 1.75rem;">
+        <button type="submit" class="btn btn-primary btn-lg btn-block" id="btnRegisterSubmit">
+          Create My Account
+        </button>
+      </div>
+    </form>
+
+    <div class="auth-switch-text">
+      Already have a ShopEase account? 
+      <a href="{% url 'login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}" id="linkLogin">
+        Sign In Instead
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

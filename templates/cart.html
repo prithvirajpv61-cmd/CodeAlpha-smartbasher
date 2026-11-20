@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Shopping Cart - ShopEase{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="margin: 2rem 0 1rem;">
+    <h1 style="font-size: 2rem; font-weight: 800;">Your Shopping Cart</h1>
+    <p style="color: var(--text-muted); font-size: 0.9375rem;">
+      Review your selected products, adjust quantities, and proceed to checkout.
+    </p>
+  </div>
+
+  {% if cart_items %}
+    <div class="cart-layout">
+      <!-- Items Table / List -->
+      <div class="cart-items-card">
+        <div class="cart-header-row">
+          <span>Product</span>
+          <span>Price</span>
+          <span>Quantity</span>
+          <span>Subtotal</span>
+          <span></span>
+        </div>
+
+        {% for item in cart_items %}
+          <div class="cart-item-row" id="cartRow-{{ item.id }}">
+            <!-- Product Info -->
+            <div class="cart-item-info">
+              <a href="{{ item.product.get_absolute_url }}">
+                <img 
+                  src="{{ item.product.get_display_image }}" 
+                  alt="{{ item.product.name }}" 
+                  class="cart-item-img"
+                  onerror="this.src='{% static 'images/placeholder.svg' %}'"
+                >
+              </a>
+              <div>
+                <span class="cart-item-cat">{{ item.product.category.name }}</span>
+                <h4 class="cart-item-name">
+                  <a href="{{ item.product.get_absolute_url }}">{{ item.product.name }}</a>
+                </h4>
+                {% if item.stock_warning %}
+                  <div style="color: var(--danger); font-size: 0.75rem; font-weight: 600; margin-top: 4px;">
+                    ⚠️ {{ item.stock_warning }}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Unit Price -->
+            <div class="cart-item-price">
+              {{ item.product.formatted_price }}
+            </div>
+
+            <!-- Quantity Controls -->
+            <div>
+              <div class="quantity-control" style="transform: scale(0.9); transform-origin: left center;">
+                <!-- Decrease Button -->
+                <form action="{% url 'update_cart' item.id %}" method="POST" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="decrease">
+                  <button type="submit" class="qty-btn" aria-label="Decrease">&minus;</button>
+                </form>
+
+                <!-- Current Quantity -->
+                <span style="display: flex; align-items: center; justify-content: center; width: 44px; font-weight: 700;">
+                  {{ item.quantity }}
+                </span>
+
+                <!-- Increase Button -->
+                <form action="{% url 'update_cart' item.id %}" method="POST" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="increase">
+                  <button 
+                    type="submit" 
+                    class="qty-btn" 
+                    aria-label="Increase"
+                    {% if item.quantity >= item.product.stock %}disabled style="opacity: 0.3; cursor: not-allowed;" title="Maximum stock reached"{% endif %}
+                  >&plus;</button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Item Subtotal -->
+            <div class="cart-item-subtotal">
+              {{ item.formatted_subtotal }}
+            </div>
+
+            <!-- Remove Button -->
+            <div>
+              <form action="{% url 'remove_from_cart' item.id %}" method="POST" onsubmit="return confirm('Remove {{ item.product.name|escapejs }} from your cart?');">
+                {% csrf_token %}
+                <button type="submit" class="cart-remove-btn" title="Remove item" aria-label="Remove item">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                </button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+
+        <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <a href="{% url 'product_list' %}" class="btn btn-secondary btn-sm">
+            &larr; Continue Shopping
+          </a>
+          <span style="font-size: 0.8125rem; color: var(--text-muted);">
+            Prices and stock are verified dynamically during checkout.
+          </span>
+        </div>
+      </div>
+
+      <!-- Order Summary Card -->
+      <div class="order-summary-card">
+        <h3 class="summary-title">Order Summary</h3>
+
+        {% if subtotal < shipping_threshold %}
+          <div class="shipping-progress-box">
+            🚚 Add <strong>₹{{ shipping_threshold|floatformat:2 }}</strong> or more to unlock <strong>FREE Delivery</strong>!
+          </div>
+        {% else %}
+          <div class="shipping-progress-box" style="background: var(--success-bg); color: #065f46;">
+            🎉 You have qualified for <strong>FREE Delivery</strong>!
+          </div>
+        {% endif %}
+
+        <div class="summary-line">
+          <span>Items Subtotal:</span>
+          <strong>₹{{ subtotal|floatformat:2 }}</strong>
+        </div>
+
+        <div class="summary-line">
+          <span>Estimated Delivery:</span>
+          <span>
+            {% if shipping_fee == 0 %}
+              <span style="color: var(--success); font-weight: 700;">FREE</span>
+            {% else %}
+              <strong>₹{{ shipping_fee|floatformat:2 }}</strong>
+            {% endif %}
+          </span>
+        </div>
+
+        <div class="summary-line">
+          <span>Applicable Taxes:</span>
+          <span>Included in Price</span>
+        </div>
+
+        <div class="summary-total-line">
+          <span>Grand Total:</span>
+          <span id="cartGrandTotal">₹{{ grand_total|floatformat:2 }}</span>
+        </div>
+
+        <div style="margin-top: 1.75rem;">
+          {% if has_stock_issues %}
+            <button class="btn btn-secondary btn-lg btn-block" disabled style="opacity: 0.6; cursor: not-allowed;">
+              Adjust Stock to Checkout
+            </button>
+            <p style="font-size: 0.75rem; color: var(--danger); text-align: center; margin-top: 0.5rem;">
+              Please adjust item quantities that exceed available inventory before proceeding.
+            </p>
+          {% else %}
+            <a href="{% url 'checkout' %}" class="btn btn-primary btn-lg btn-block" id="proceedCheckoutBtn">
+              Proceed to Checkout
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </a>
+          {% endif %}
+        </div>
+
+        <div style="margin-top: 1.5rem; text-align: center; font-size: 0.8125rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>Safe &amp; 100% Encrypted Transactions</span>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <!-- Empty Cart State -->
+    <div class="empty-state">
+      <div class="empty-state-icon">🛒</div>
+      <h2 class="empty-state-title">Your shopping cart is currently empty</h2>
+      <p class="empty-state-desc">
+        Explore our curated selection of hot electronics, stylish clothing, and top appliances to fill your cart.
+      </p>
+      <a href="{% url 'product_list' %}" class="btn btn-primary btn-lg" id="emptyCartShopBtn">
+        Start Shopping Now
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

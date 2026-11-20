@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout - ShopEase{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Breadcrumb -->
+  <div style="margin-top: 1.5rem; margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-muted);">
+    <a href="{% url 'home' %}">Home</a> &rsaquo; 
+    {% if is_buy_now %}
+      <a href="{{ buy_now_product.get_absolute_url }}">{{ buy_now_product.name|truncatechars:25 }}</a> &rsaquo;
+      <span style="color: var(--text-main); font-weight: 600;">Instant Buy Now Checkout</span>
+    {% else %}
+      <a href="{% url 'cart' %}">Cart</a> &rsaquo; 
+      <span style="color: var(--text-main); font-weight: 600;">Cart Checkout</span>
+    {% endif %}
+  </div>
+
+  <div style="margin-bottom: 2rem;">
+    {% if is_buy_now %}
+      <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: #fff7ed; border: 1px solid #fdba74; color: #c2410c; padding: 0.4rem 0.85rem; border-radius: var(--radius-full); font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.75rem;">
+        ⚡ Direct Buy Now Checkout &bull; Unrelated cart items are safely preserved
+      </div>
+      <h1 style="font-size: 2rem; font-weight: 800;">Express Purchase</h1>
+      <p style="color: var(--text-muted); font-size: 0.9375rem;">
+        Ordering <strong>{{ buy_now_product.name }}</strong> (Quantity: {{ buy_now_qty }}) directly.
+      </p>
+    {% else %}
+      <h1 style="font-size: 2rem; font-weight: 800;">Checkout &amp; Order Placement</h1>
+      <p style="color: var(--text-muted); font-size: 0.9375rem;">
+        Please confirm your delivery address and choose your preferred payment option.
+      </p>
+    {% endif %}
+  </div>
+
+  <form action="{% url 'checkout' %}" method="POST" id="checkoutForm">
+    {% csrf_token %}
+    {% if is_buy_now %}
+      <input type="hidden" name="buy_now" value="1">
+      <input type="hidden" name="product_id" value="{{ buy_now_product.id }}">
+      <input type="hidden" name="quantity" value="{{ buy_now_qty }}">
+    {% endif %}
+
+    <div class="checkout-layout">
+      <!-- Left Column: Delivery Details & Payment Method -->
+      <div>
+        <!-- Delivery Address Box -->
+        <div class="checkout-form-card" style="margin-bottom: 2rem;">
+          <h2 class="form-section-title">
+            <span class="step-number">1</span>
+            Shipping &amp; Delivery Information
+          </h2>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="id_full_name">Full Name *</label>
+              {{ form.full_name }}
+              {% if form.full_name.errors %}
+                <div class="form-error">{{ form.full_name.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="id_phone">Mobile Number *</label>
+              {{ form.phone }}
+              {% if form.phone.errors %}
+                <div class="form-error">{{ form.phone.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="id_email">Email Address *</label>
+            {{ form.email }}
+            {% if form.email.errors %}
+              <div class="form-error">{{ form.email.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="id_address">Complete Street Address *</label>
+            {{ form.address }}
+            {% if form.address.errors %}
+              <div class="form-error">{{ form.address.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="id_city">City *</label>
+              {{ form.city }}
+              {% if form.city.errors %}
+                <div class="form-error">{{ form.city.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="id_state">State *</label>
+              {{ form.state }}
+              {% if form.state.errors %}
+                <div class="form-error">{{ form.state.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="id_postal_code">Postal / PIN Code *</label>
+              {{ form.postal_code }}
+              {% if form.postal_code.errors %}
+                <div class="form-error">{{ form.postal_code.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="id_notes">Delivery Notes (Optional)</label>
+              {{ form.notes }}
+              {% if form.notes.errors %}
+                <div class="form-error">{{ form.notes.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Method Box -->
+        <div class="checkout-form-card">
+          <h2 class="form-section-title">
+            <span class="step-number">2</span>
+            Payment Method
+          </h2>
+
+          <div class="payment-methods-grid">
+            <!-- Cash on Delivery -->
+            <label class="payment-method-card" for="payment_cod">
+              <input type="radio" name="payment_method" value="cod" id="payment_cod" {% if form.payment_method.value == 'cod' or not form.payment_method.value %}checked{% endif %}>
+              <div class="payment-method-details">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="font-size: 1.25rem;">💵</span>
+                  <h4>Cash on Delivery (COD)</h4>
+                </div>
+                <p>Pay with cash or UPI directly to the courier agent upon doorstep delivery.</p>
+              </div>
+            </label>
+
+            <!-- Simulated Online Payment -->
+            <label class="payment-method-card" for="payment_simulated">
+              <input type="radio" name="payment_method" value="simulated" id="payment_simulated" {% if form.payment_method.value == 'simulated' %}checked{% endif %}>
+              <div class="payment-method-details">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="font-size: 1.25rem;">💳</span>
+                  <h4>Simulated Card / UPI Payment (Instant Sandbox)</h4>
+                </div>
+                <p>Instant demonstration payment verification. Your order status will immediately show as Paid &amp; Processing.</p>
+              </div>
+            </label>
+          </div>
+          {% if form.payment_method.errors %}
+            <div class="form-error">{{ form.payment_method.errors.0 }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Right Column: Order Summary & Place Order -->
+      <aside>
+        <div class="order-summary-card">
+          <h3 class="summary-title">Order Items ({{ cart_items|length }})</h3>
+
+          <div style="max-height: 280px; overflow-y: auto; margin-bottom: 1.5rem; padding-right: 0.5rem;">
+            {% for item in cart_items %}
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.875rem; font-size: 0.875rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <img 
+                    src="{{ item.product.get_display_image }}" 
+                    alt="{{ item.product.name }}" 
+                    style="width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-light);"
+                    onerror="this.src='{% static 'images/placeholder.svg' %}'"
+                  >
+                  <div>
+                    <div style="font-weight: 600; max-width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                      {{ item.product.name }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                      Qty: {{ item.quantity }} &times; {{ item.product.formatted_price }}
+                    </div>
+                  </div>
+                </div>
+                <div style="font-weight: 700; color: var(--text-main);">
+                  {{ item.formatted_subtotal }}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <div class="summary-line">
+            <span>Items Subtotal:</span>
+            <strong>₹{{ subtotal|floatformat:2 }}</strong>
+          </div>
+
+          <div class="summary-line">
+            <span>Shipping:</span>
+            <span>
+              {% if shipping_fee == 0 %}
+                <span style="color: var(--success); font-weight: 700;">FREE</span>
+              {% else %}
+                <strong>₹{{ shipping_fee|floatformat:2 }}</strong>
+              {% endif %}
+            </span>
+          </div>
+
+          <div class="summary-total-line">
+            <span>Amount Payable:</span>
+            <span>₹{{ grand_total|floatformat:2 }}</span>
+          </div>
+
+          <div style="margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary btn-lg btn-block" id="btnPlaceOrder">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              Place Order &bull; ₹{{ grand_total|floatformat:2 }}
+            </button>
+          </div>
+
+          <div style="margin-top: 1.25rem; font-size: 0.75rem; color: var(--text-muted); text-align: center; line-height: 1.4;">
+            By placing this order, you agree to ShopEase's Terms of Service and Privacy Policy. All inventory deductions are protected by database transactions.
+          </div>
+        </div>
+      </aside>
+    </div>
+  </form>
+</div>
+{% endblock %}
